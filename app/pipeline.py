@@ -24,7 +24,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.collectors.base import CollectResult, Collector
 from app.collectors.sources.forums import ForumsCollector
@@ -96,27 +95,48 @@ def _db_log(
 def _upsert_platform(session: Any, data: dict) -> Platform:
     """Insert platform or update existing row (matched by canonical URL).
 
-    Uses PostgreSQL ``ON CONFLICT DO UPDATE`` so it's safe under concurrency.
+    Works with both PostgreSQL (ON CONFLICT DO UPDATE) and SQLite
+    (SELECT + INSERT/UPDATE pattern).
     """
     canonical_url = canonicalize_url(data["url"])
     safe_data = {k: v for k, v in data.items() if k != "url" and v is not None}
 
-    stmt = (
-        pg_insert(Platform)
-        .values(url=canonical_url, **safe_data)
-        .on_conflict_do_update(
-            index_elements=["url"],
-            set_={
-                "title": safe_data.get("title"),
-                "audience_size": safe_data.get("audience_size"),
-                "activity_last_seen_at": safe_data.get("activity_last_seen_at"),
-                "updated_at": _utcnow(),
-            },
+    dialect = session.bind.dialect.name  # type: ignore[union-attr]
+
+    if dialect == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+        stmt = (
+            pg_insert(Platform)
+            .values(url=canonical_url, **safe_data)
+            .on_conflict_do_update(
+                index_elements=["url"],
+                set_={
+                    "title": safe_data.get("title"),
+                    "audience_size": safe_data.get("audience_size"),
+                    "activity_last_seen_at": safe_data.get("activity_last_seen_at"),
+                    "updated_at": _utcnow(),
+                },
+            )
+            .returning(Platform)
         )
-        .returning(Platform)
-    )
-    result = session.execute(stmt)
-    return result.scalar_one()
+        return session.execute(stmt).scalar_one()
+
+    # SQLite / generic: SELECT then INSERT or UPDATE
+    existing = session.execute(
+        select(Platform).where(Platform.url == canonical_url)
+    ).scalar_one_or_none()
+
+    if existing:
+        for key, value in safe_data.items():
+            if hasattr(existing, key):
+                setattr(existing, key, value)
+        existing.updated_at = _utcnow()
+        return existing
+
+    platform = Platform(url=canonical_url, **safe_data)
+    session.add(platform)
+    return platform
 
 
 def _build_features(platform: Platform, intents: list[str], trigger_hits: dict) -> tuple[dict, dict]:
