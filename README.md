@@ -1,36 +1,46 @@
-# StudyAssist Intel System (MVP)
+# StudyAssist Intel System
 
-Этот репозиторий содержит базовый документ ТЗ и стартовый план внедрения.
+MVP-система для поиска площадок/конкурентов, сбора упоминаний, rule-based классификации, скоринга и постановки задач оператору.
 
-## Что уже есть
-- `TECHNICAL_SPEC.md` — целевое ТЗ по архитектуре, данным, скорингу и операционному процессу.
+## Что реализовано
+- REST API для данных и операций (`/api/platforms`, `/api/mentions`, `/api/tasks`, `/api/run/discovery`, `/api/tasks/{id}/status`).
+- GUI-дашборд оператора (`/`) с запуском discovery и сменой статуса задач.
+- PostgreSQL-модель данных (ORM + `schema.sql`).
+- MVP-пайплайн discovery -> mentions -> scoring -> tasks.
+- Rule-based интент-классификатор и baseline scoring.
+- Идемпотентность на уровне дедупа (`fingerprint`, `canonical URL`).
+- Экспорты `CSV` через `scripts/export_csv.py`.
+- Заготовки интеграций с retry/backoff для 429.
 
-## Что делать дальше (рекомендуемый порядок)
-1. **Зафиксировать технические решения**
-   - Python 3.11+
-   - PostgreSQL 15+
-   - Alembic + SQLAlchemy
-   - n8n (или Airflow) как оркестратор
-2. **Поднять каркас проекта**
-   - создать структуру `app/`, `scripts/`, `tests/`
-   - добавить `.env.example`
-   - добавить `pyproject.toml`
-3. **Сначала реализовать данные и идемпотентность**
-   - DDL/миграции таблиц из ТЗ
-   - индексы и уникальные ограничения для дедупа
-4. **Сделать минимальный E2E путь**
-   - один источник discovery
-   - один источник mentions
-   - rule-based классификатор
-   - baseline scoring
-   - создание задач `tasks`
-5. **Добавить наблюдаемость и эксплуатацию**
-   - structured logs
-   - Prometheus метрики
-   - Sentry SDK
-6. **Запустить пилот с оператором**
-   - проверить precision@N
-   - откалибровать пороги
-   - зафиксировать runbook
+## Быстрый старт
+```bash
+docker compose up -d postgres
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+cp .env.example .env
+```
 
-Подробная разбивка: см. `IMPLEMENTATION_PLAN.md`.
+## Запуск GUI-приложения
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+После запуска:
+- GUI: `http://localhost:8000/`
+- Health: `http://localhost:8000/health`
+- API docs: `http://localhost:8000/docs`
+
+## Операционный цикл через GUI
+1. Открыть `/`.
+2. Нажать **Run discovery now**.
+3. Проверить новые platforms/mentions/tasks в таблицах.
+4. Изменить статус задач в секции **Task status management**.
+
+## Скрипты
+```bash
+bash scripts/run_discovery.sh
+bash scripts/run_trigger_scan.sh
+python scripts/export_csv.py
+pytest -q
+```
