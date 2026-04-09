@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-python -c "from app.pipeline import run_discovery; print(run_discovery())"
+# Full nightly discovery: all collectors → DB → tasks.
+python -c "
+from app.pipeline import run_discovery
+import json
+result = run_discovery()
+print(json.dumps(result, indent=2))
+"

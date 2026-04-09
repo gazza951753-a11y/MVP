@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
@@ -20,10 +20,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 class TimestampMixin:
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
 
 
@@ -75,7 +79,7 @@ class Mention(Base):
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
     author_handle: Mapped[str | None] = mapped_column(String(255))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     text: Mapped[str | None] = mapped_column(Text)
     raw_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     fingerprint: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
@@ -97,7 +101,7 @@ class Trigger(Base):
     negative_keywords: Mapped[list[str]] = mapped_column(JSON, default=list)
     weight: Mapped[float] = mapped_column(Float, default=1.0)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
 class AdminContact(Base):
@@ -119,7 +123,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     role: Mapped[str] = mapped_column(String(32), default="operator")
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
@@ -154,4 +158,4 @@ class Log(Base):
     error_code: Mapped[str | None] = mapped_column(String(64))
     message: Mapped[str] = mapped_column(Text, nullable=False)
     payload: Mapped[dict | None] = mapped_column(JSON)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

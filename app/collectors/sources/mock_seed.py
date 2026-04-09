@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.collectors.base import CollectResult, Collector
 
@@ -18,7 +18,7 @@ class MockSeedCollector(Collector):
                     "language": "ru",
                     "geo": "RU",
                     "audience_size": 12400,
-                    "activity_last_seen_at": datetime.utcnow(),
+                    "activity_last_seen_at": datetime.now(timezone.utc),
                     "rules_text": "Без спама. Реклама только по согласованию.",
                     "commercial_tolerance": 3,
                     "risk_flags": {"ban_risk": False},
@@ -32,7 +32,7 @@ class MockSeedCollector(Collector):
                     "mention_type": "post",
                     "source_url": "https://t.me/studyassist_help/101",
                     "author_handle": "@anon",
-                    "published_at": datetime.utcnow(),
+                    "published_at": datetime.now(timezone.utc),
                     "text": "Срочно нужна помощь с курсовой, дедлайн завтра",
                     "raw_payload": {"source": "mock"},
                 }
