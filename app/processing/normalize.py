@@ -15,7 +15,10 @@ TRACKING_PARAMS = {
 
 
 def canonicalize_url(url: str) -> str:
-    parsed = urlparse(url.strip())
+    url = url.strip()
+    if not url:
+        return ""
+    parsed = urlparse(url)
     scheme = parsed.scheme.lower() or "https"
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip("/") or "/"

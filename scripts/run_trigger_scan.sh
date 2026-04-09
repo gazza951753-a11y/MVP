@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# В MVP trigger-scan переиспользует discovery pipeline.
-python -c "from app.pipeline import run_discovery; print(run_discovery())"
+# Frequent hot-path trigger scan (run every 10–30 minutes via cron/scheduler).
+# Uses a lighter collector set than full discovery.
+python -c "
+from app.pipeline import run_trigger_scan
+import json
+result = run_trigger_scan()
+print(json.dumps(result, indent=2))
+"
