@@ -5,7 +5,9 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Form
+import threading
+
+from fastapi import APIRouter, BackgroundTasks, Form
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func, select
 
@@ -521,14 +523,14 @@ def save_settings(
 
 @router.post("/gui/run-discovery")
 def run_discovery_gui() -> RedirectResponse:
-    run_discovery()
-    return RedirectResponse(url="/?flash=Discovery+завершён", status_code=303)
+    threading.Thread(target=run_discovery, daemon=True).start()
+    return RedirectResponse(url="/?flash=Discovery+запущен+в+фоне", status_code=303)
 
 
 @router.get("/gui/trigger-scan")
 def trigger_scan_gui() -> RedirectResponse:
-    run_trigger_scan()
-    return RedirectResponse(url="/?flash=Триггер-скан+завершён", status_code=303)
+    threading.Thread(target=run_trigger_scan, daemon=True).start()
+    return RedirectResponse(url="/platforms?flash=Триггер-скан+запущен+в+фоне", status_code=303)
 
 
 @router.post("/gui/task-status")
