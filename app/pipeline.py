@@ -322,11 +322,11 @@ def run_discovery() -> dict:
 
 
 def run_trigger_scan() -> dict:
-    """Frequent hot-path scan: re-use MockSeedCollector + ForumsCollector only."""
+    """Frequent hot-path scan: MockSeedCollector only (no blocking network I/O)."""
     run_id = uuid.uuid4()
     totals = {"platforms_seen": 0, "mentions_created": 0, "tasks_created": 0}
 
-    for collector_cls in [MockSeedCollector, ForumsCollector]:
+    for collector_cls in [MockSeedCollector]:
         collector = collector_cls()
         result = _run_collector(collector, run_id)
         try:

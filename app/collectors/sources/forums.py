@@ -48,7 +48,7 @@ class ForumsCollector(Collector):
     def __init__(self, seed_urls: list[str] | None = None) -> None:
         self._seed_urls = seed_urls or _SEED_FORUM_URLS
         self._client = httpx.Client(
-            timeout=settings.request_timeout_seconds,
+            timeout=httpx.Timeout(connect=5.0, read=settings.request_timeout_seconds, write=5.0, pool=5.0),
             headers={"User-Agent": "Mozilla/5.0 (compatible; StudyAssistBot/1.0; research)"},
             follow_redirects=True,
         )
