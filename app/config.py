@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Core
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/intel"
+    database_url: str = "sqlite:///studyassist.db"
     app_env: str = "dev"
     app_host: str = "0.0.0.0"
     app_port: int = 8000

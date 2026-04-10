@@ -89,9 +89,11 @@ class _TriggerRule:
 @dataclass
 class _Cache:
     rules: list[_TriggerRule] = field(default_factory=list)
-    loaded_at: float = 0.0
+    loaded_at: Optional[float] = None  # None = never loaded
 
     def is_stale(self) -> bool:
+        if self.loaded_at is None:
+            return True
         return time.monotonic() - self.loaded_at > CACHE_TTL_SECONDS
 
 
@@ -148,7 +150,7 @@ def _get_rules() -> list[_TriggerRule]:
 
 def invalidate_cache() -> None:
     """Force reload of trigger rules on next call (e.g. after seed insert)."""
-    _cache.loaded_at = 0.0
+    _cache.loaded_at = None
 
 
 # --------------------------------------------------------------------------- #
