@@ -30,6 +30,11 @@ export/
 .DS_Store
 Thumbs.db
 
+# SQLite runtime databases
+*.db
+*.db-shm
+*.db-wal
+
 # Pytest
 .pytest_cache/
 .coverage
