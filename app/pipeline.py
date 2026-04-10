@@ -29,6 +29,7 @@ from app.collectors.base import CollectResult, Collector
 from app.collectors.sources.forums import ForumsCollector
 from app.collectors.sources.mock_seed import MockSeedCollector
 from app.collectors.sources.tg_catalog import TgCatalogCollector
+from app.collectors.sources.tg_channel import TgChannelCollector
 from app.collectors.sources.vk_public import VkPublicCollector
 from app.db.base import SessionLocal
 from app.db.models import Log, Mention, Platform, Task
@@ -48,10 +49,9 @@ from app.tasks.creator import build_task_payload
 logger = logging.getLogger(__name__)
 
 _DISCOVERY_COLLECTORS: list[type[Collector]] = [
-    MockSeedCollector,
-    TgCatalogCollector,
-    VkPublicCollector,
-    ForumsCollector,
+    TgChannelCollector,   # public Telegram previews — no auth needed
+    VkPublicCollector,    # VK groups — needs vk_access_token in .env
+    ForumsCollector,      # forum pages — slow, use last
 ]
 
 _utcnow = lambda: datetime.now(timezone.utc)  # noqa: E731
@@ -322,11 +322,11 @@ def run_discovery() -> dict:
 
 
 def run_trigger_scan() -> dict:
-    """Frequent hot-path scan: MockSeedCollector only (no blocking network I/O)."""
+    """Frequent hot-path scan: real Telegram channel posts + mock seed."""
     run_id = uuid.uuid4()
     totals = {"platforms_seen": 0, "mentions_created": 0, "tasks_created": 0}
 
-    for collector_cls in [MockSeedCollector]:
+    for collector_cls in [TgChannelCollector, MockSeedCollector]:
         collector = collector_cls()
         result = _run_collector(collector, run_id)
         try:

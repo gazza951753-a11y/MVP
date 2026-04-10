@@ -472,7 +472,17 @@ def settings_page(flash: str = "") -> str:
             <input type="text" name="google_spreadsheet_id" value="{val('google_spreadsheet_id')}">
           </div>
         </div>
-        <button class="btn btn-primary" type="submit">&#128190; Сохранить настройки</button>
+        <hr style="margin:20px 0;border-color:var(--border)">
+        <h3 style="margin-bottom:10px">&#128269; Источники для сканирования</h3>
+        <p style="color:var(--text-muted);font-size:12px;margin-bottom:10px">
+          Telegram каналы — по одному имени на строку, без @. Программа заходит на публичную
+          страницу t.me/s/ИМЯ и ищет посты студентов. Каналы должны быть публичными.
+        </p>
+        <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <label>Telegram каналы (по одному на строку)</label>
+          <textarea name="tg_channels" rows="8" style="width:100%;font-family:monospace;font-size:13px;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);resize:vertical">{val('tg_channels', chr(10).join(["studizba","student_helper_ru","diplomchik_help","kursovik_help","nauka_pomoshch","antiplagiat_help","vkr_diplom","referat_kursovaya","student_rf","ucheba_legko"]))}</textarea>
+        </div>
+        <button class="btn btn-primary" type="submit" style="margin-top:12px">&#128190; Сохранить настройки</button>
       </form>
     </div>
     <div class="card" style="margin-top:0">
@@ -498,6 +508,7 @@ def save_settings(
     telegram_operator_chat_id: str = Form(""),
     vk_access_token: str = Form(""),
     google_spreadsheet_id: str = Form(""),
+    tg_channels: str = Form(""),
 ) -> RedirectResponse:
     data = {
         "airtable_pat": airtable_pat,
@@ -508,7 +519,9 @@ def save_settings(
         "telegram_operator_chat_id": telegram_operator_chat_id,
         "vk_access_token": vk_access_token,
         "google_spreadsheet_id": google_spreadsheet_id,
+        "tg_channels": tg_channels,
     }
+    # Save all fields including empty ones so they overwrite previous values
     _save_settings({k: v for k, v in data.items() if v})
     # Persist to environment for current process
     for k, v in data.items():
